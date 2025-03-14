@@ -3,23 +3,23 @@ import datetime
 
 class Graph:
     def __init__(self):
-        self.nodes = set()
+        self.nodes = dict()
         self.edges = dict()
 
     def create_from_dataframe(self, df):
         for _, row in df.iterrows():
-            start_node = Node(row['start_stop'])
-            end_node = Node(row['end_stop'])
-            self.add_node(start_node)
-            self.add_node(end_node)
+            self.add_node(row["start_stop"], row["start_stop_lat"], row["start_stop_lon"])
+            self.add_node(row["end_stop"], row["end_stop_lat"], row["end_stop_lon"])
             edge = Edge(
                 row['line'], row['departure_time'], row['arrival_time'], row['start_stop'], row['end_stop'],
                 row['start_stop_lat'], row['start_stop_lon'], row['end_stop_lat'], row['end_stop_lon']
             )
             self.add_edge(edge)
 
-    def add_node(self, node):
-        self.nodes.add(node)
+    def add_node(self, name, lat, long):
+        if name not in self.nodes:
+            self.nodes[name] = Node(name)
+        self.nodes[name].add_location(lat, long)
 
     def add_edge(self, edge):
         self.edges[edge.start_stop] = edge

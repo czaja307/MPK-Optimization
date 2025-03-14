@@ -5,7 +5,8 @@ def main():
     data = load_data()
     print(data)
 
-    load_graph()
+    graph = load_graph()
+    print(graph)
 
 
 if __name__ == "__main__":
