@@ -1,4 +1,5 @@
 import datetime
+import heapq
 
 
 class Graph:
@@ -17,12 +18,15 @@ class Graph:
             self.add_edge(edge)
 
     def add_node(self, name, lat, long):
+        # TODO: average location for nodes with the same name
         if name not in self.nodes:
             self.nodes[name] = Node(name)
         self.nodes[name].add_location(lat, long)
 
     def add_edge(self, edge):
-        self.edges[edge.start_stop] = edge
+        if edge.start_stop not in self.edges:
+            self.edges[edge.start_stop] = []
+        self.edges[edge.start_stop].append(edge)
 
     def __str__(self):
         return f"Graph with {len(self.nodes)} nodes and {len(self.edges)} edges"
@@ -44,7 +48,7 @@ class Edge:
         self.end_stop_lon = end_stop_lon
 
     def get_travel_time(self):
-        return (self.arrival_time - self.departure_time) / 60
+        return (self.arrival_time - self.departure_time).seconds / 60
 
     def __str__(self):
         return f"Edge {self.line} from {self.start_stop} to {self.end_stop} at {self.departure_time}"
