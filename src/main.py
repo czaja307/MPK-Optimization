@@ -21,8 +21,8 @@ def main():
     # print(len(graph.nodes))
     # print(sum(len(edges) for edges in graph.edges.values()))
 
-    path, distances = dijkstra(graph, "poprzeczna", "pl. grunwaldzki")
-    # path, distances = dijkstra(graph, "poprzeczna", "pl. grunwaldzki", datetime.datetime.strptime("08:00:00", '%H:%M:%S'))
+    # path, distances = dijkstra(graph, "poprzeczna", "pl. grunwaldzki")
+    path, distances = dijkstra(graph, "poprzeczna", "pl. grunwaldzki", datetime.datetime.strptime("12:00:00", '%H:%M:%S'))
 
     print("Shortest path:")
     for step in path:

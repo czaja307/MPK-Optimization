@@ -1,5 +1,5 @@
 import datetime
-import heapq
+from bisect import bisect
 
 
 class Graph:
@@ -18,19 +18,52 @@ class Graph:
             self.add_edge(edge)
 
     def add_node(self, name, lat, long):
-        # TODO: average location for nodes with the same name
         if name not in self.nodes:
             self.nodes[name] = Node(name)
         self.nodes[name].add_location(lat, long)
 
     def add_edge(self, edge):
+        # Add the edge to the graph's edge collection
         if edge.start_stop not in self.edges:
             self.edges[edge.start_stop] = []
         self.edges[edge.start_stop].append(edge)
 
-    def __str__(self):
-        return f"Graph with {len(self.nodes)} nodes and {len(self.edges)} edges"
+        # Also add the edge to the start node's outgoing edges
+        self.nodes[edge.start_stop].add_edge(edge)
 
+    def get_time_cost(self, start, end, time: datetime.datetime, last_line, used_lines):
+        # Modified to use the new get_sorted_edges method that takes an end_stop parameter
+        possible_paths = self.nodes[start].get_sorted_edges(end)
+        if not possible_paths:
+            return float('inf'), None
+
+        soonest_id = self.find_first_id_after(possible_paths, time)
+        if soonest_id is None:
+            soonest_id = 0
+        cost = possible_paths[soonest_id].get_travel_time() + abs(
+            (possible_paths[soonest_id].arrival_time - time).seconds / 60.0)
+        if possible_paths[soonest_id].line != last_line:
+            cost += 15
+        return cost, possible_paths[soonest_id]
+
+    def find_first_id_after(self, paths, time: datetime.datetime, line=None):
+        if not paths:
+            return None
+
+        path_i = bisect(paths, time, key=lambda path: path.arrival_time)
+        i = 0
+        while path_i - i - 1 >= 0 and paths[path_i - i - 1].arrival_time == time:
+            if line is not None:
+                if paths[path_i - i - 1].line == line:
+                    return path_i - i - 1
+            i += 1
+        if 0 <= path_i - i < len(paths):
+            return path_i - i
+        return None
+
+    def __str__(self):
+        total_edges = sum(len(edges) for edges in self.edges.values())
+        return f"Graph with {len(self.nodes)} nodes and {total_edges} edges"
 
 class Edge:
     def __init__(self, line, departure_time, arrival_time, start_stop, end_stop, start_stop_lat, start_stop_lon,
@@ -58,9 +91,19 @@ class Node:
     def __init__(self, name):
         self.name = name
         self.locations = set()
+        self.outgoing_edges = {}  # Changed from list to dictionary
+        self.was_sorted = False
 
     def add_location(self, lat, lon):
         self.locations.add((lat, lon))
+        self.was_sorted = False
+
+    def add_edge(self, edge):
+        # Add the edge to the dictionary using end_stop as key
+        if edge.end_stop not in self.outgoing_edges:
+            self.outgoing_edges[edge.end_stop] = []
+        self.outgoing_edges[edge.end_stop].append(edge)
+        self.was_sorted = False
 
     def get_avg_location(self):
         lat_sum = 0
@@ -70,5 +113,18 @@ class Node:
             lon_sum += lon
         return lat_sum / len(self.locations), lon_sum / len(self.locations)
 
+    def get_sorted_edges(self, end_stop):
+        # Get sorted edges for a specific end_stop
+        if end_stop not in self.outgoing_edges:
+            return []
+
+        if not self.was_sorted:
+            for dest in self.outgoing_edges:
+                self.outgoing_edges[dest] = sorted(self.outgoing_edges[dest], key=lambda path: path.arrival_time)
+            self.was_sorted = True
+
+        return self.outgoing_edges[end_stop]
+
     def __str__(self):
-        return f"Node {self.name} with {len(self.locations)} locations"
+        total_edges = sum(len(edges) for edges in self.outgoing_edges.values())
+        return f"Node {self.name} with {len(self.locations)} locations and {total_edges} outgoing edges"
