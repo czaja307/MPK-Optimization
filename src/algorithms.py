@@ -87,42 +87,71 @@ def astar(graph, start, end, start_time, cost_function):
     previous_nodes = {node: None for node in graph.nodes}
     previous_edges = {node: None for node in graph.nodes}
     priority_queue = []
-
-    # We can use a distance heuristic if cost_function is time-based:
-    base_heuristic = graph.get_distance(start.lower(), end.lower()) if cost_function == graph.get_time_cost else 0
+    
+    # Apply a scaling factor to make the heuristic more conservative
+    scaling_factor = 0.7  # Reduce the heuristic to ensure admissibility
+    
+    # Initialize with the start node
+    base_heuristic = graph.get_distance(start.lower(), end.lower()) * scaling_factor if cost_function == graph.get_time_cost else 0
     heapq.heappush(priority_queue, (base_heuristic, 0, start, start_time, None, 0))
-
+    
+    visited = set()  # Track visited nodes to avoid unnecessary processing
+    
     while priority_queue:
         _, current_cost, current_node, current_time, last_line, line_changes = heapq.heappop(priority_queue)
-        if current_node == end.lower():
+        
+        # Skip if we've already found a better path to this node
+        if current_cost > costs[current_node] or current_node in visited:
+            continue
+            
+        visited.add(current_node)
+        
+        # Found the destination
+        if current_node.lower() == end.lower():
             path, total_time, line_changes = _reconstruct_with_details(
                 previous_nodes, previous_edges, current_node, start_time
             )
             return path, costs, total_time, line_changes
 
-        if current_cost > costs[current_node]:
-            continue
-
         for edge in graph.edges.get(current_node, []):
+            neighbor = edge.end_stop
+            
+            # Skip edges that depart before current time
             if edge.departure_time < current_time:
                 continue
+                
             travel_cost, edge_used = cost_function(
-                current_node, edge.end_stop, current_time, last_line, line_changes
+                current_node, neighbor, current_time, last_line, line_changes
             )
+            
             if edge_used is None:
                 continue
-            distance = current_cost + travel_cost
-            if distance < costs[edge.end_stop]:
-                costs[edge.end_stop] = distance
-                previous_nodes[edge.end_stop] = current_node
-                previous_edges[edge.end_stop] = edge_used
-                # Heuristic is distance if time cost is chosen, else 0
-                heuristic = graph.get_distance(edge.end_stop, end.lower()) \
+                
+            # Calculate new cost to this neighbor
+            new_cost = current_cost + travel_cost
+            new_line_changes = line_changes
+            if last_line is not None and edge_used.line != last_line:
+                new_line_changes += 1
+                
+            if new_cost < costs[neighbor]:
+                costs[neighbor] = new_cost
+                previous_nodes[neighbor] = current_node
+                previous_edges[neighbor] = edge_used
+                
+                # Calculate heuristic with scaling factor
+                heuristic = graph.get_distance(neighbor, end.lower()) * scaling_factor \
                     if cost_function == graph.get_time_cost else 0
-                heapq.heappush(priority_queue, (distance + heuristic, distance,
-                                                edge.end_stop, edge_used.arrival_time,
-                                                edge_used.line, line_changes))
+                    
+                heapq.heappush(priority_queue, (
+                    new_cost + heuristic,  # f = g + h
+                    new_cost,              # g
+                    neighbor,
+                    edge_used.arrival_time,
+                    edge_used.line,
+                    new_line_changes
+                ))
 
+    # If we get here, no path was found
     return [], costs, 0, 0
 
 
@@ -162,4 +191,3 @@ def reconstruct_path(came_from, current):
         current = came_from[current]
         path.insert(0, current)
     return path
-

@@ -34,41 +34,54 @@ def get_user_input_and_run_dijkstra(graph):
 
 def main():
     graph = load_graph()
-
-    # print(len(graph.nodes))
-    # print(sum(len(edges) for edges in graph.edges.values()))
-
-    # path, distances = dijkstra(graph, "poprzeczna", "pl. grunwaldzki")
-    path, distances, total_time, line_changes = dijkstra(graph, "pl. grunwaldzki", "arkady (capitol)",
-                                                         datetime.datetime.strptime("12:00:00", '%H:%M:%S'),
-                                                         graph.get_time_cost)
-
-    print("Shortest path:")
-    for step in path:
-        print(step)
-
-    print("Time", total_time)
-    print("Line changes:", line_changes)
-
-    path_time, costs_time, total_time_astar, line_changes_astar = astar(graph, "poprzeczna", "rondo",
-                                 datetime.datetime.strptime("12:00:00", '%H:%M:%S'),
-                                 graph.get_time_cost)
-    print("A* shortest path (time):")
+    start_stop = "poprzeczna"
+    end_stop = "rondo"
+    start_time = datetime.datetime.strptime("12:00:00", '%H:%M:%S')
+    
+    print("\n=== Dijkstra's Algorithm ===")
+    dijkstra_start = time.time()
+    path_time, costs_time, total_time, line_changes = dijkstra(
+        graph, start_stop, end_stop, start_time, graph.get_time_cost
+    )
+    dijkstra_end = time.time()
+    print(f"Execution time: {dijkstra_end - dijkstra_start:.4f} seconds")
+    print("Shortest path (time):")
     for step in path_time:
         print(step)
-    print("Time", total_time_astar)
-    print("Line changes:", line_changes_astar)
-
-    path_line, costs_line, total_time_astar_line, line_changes_astar_line = astar(graph, "poprzeczna", "rondo",
-                                 datetime.datetime.strptime("12:00:00", '%H:%M:%S'),
-                                 graph.get_line_cost)
-    print("A* shortest path (line changes):")
+    print(f"Time: {total_time}")
+    print(f"Line changes: {line_changes}")
+    
+    print("\n=== A* Algorithm ===")
+    astar_start = time.time()
+    path_time_astar, costs_time_astar, total_time_astar, line_changes_astar = astar(
+        graph, start_stop, end_stop, start_time, graph.get_time_cost
+    )
+    astar_end = time.time()
+    print(f"Execution time: {astar_end - astar_start:.4f} seconds")
+    print("A* shortest path (time):")
+    for step in path_time_astar:
+        print(step)
+    print(f"Time: {total_time_astar}")
+    print(f"Line changes: {line_changes_astar}")
+    
+    print("\n=== Comparing line change optimization ===")
+    path_line, costs_line, total_time_line, line_changes_line = dijkstra(
+        graph, start_stop, end_stop, start_time, graph.get_line_cost
+    )
+    print("Dijkstra shortest path (line changes):")
     for step in path_line:
         print(step)
-    print("Time", total_time_astar_line)
-    print("Line changes:", line_changes_astar_line)
-    # get_user_input_and_run_dijkstra(graph)
-
+    print(f"Time: {total_time_line}")
+    print(f"Line changes: {line_changes_line}")
+    
+    path_line_astar, costs_line_astar, total_time_astar_line, line_changes_astar_line = astar(
+        graph, start_stop, end_stop, start_time, graph.get_line_cost
+    )
+    print("A* shortest path (line changes):")
+    for step in path_line_astar:
+        print(step)
+    print(f"Time: {total_time_astar_line}")
+    print(f"Line changes: {line_changes_astar_line}")
 
 if __name__ == "__main__":
     main()

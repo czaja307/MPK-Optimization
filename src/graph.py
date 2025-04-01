@@ -1,6 +1,7 @@
 import datetime
 from bisect import bisect
 import math
+from constants import km_per_deg, mins_per_km
 
 
 class Graph:
@@ -43,7 +44,7 @@ class Graph:
         cost = possible_paths[soonest_id].get_travel_time() + abs(
             (possible_paths[soonest_id].arrival_time - time).seconds / 60.0)
         if possible_paths[soonest_id].line != last_line:
-            cost += 5
+            cost += 0
         return cost, possible_paths[soonest_id]
 
     def get_line_cost(self, start, end, time, last_line, used_lines):
@@ -84,13 +85,8 @@ class Graph:
             return 0.0
         lat1, lon1 = self.nodes[from_stop].get_avg_location()
         lat2, lon2 = self.nodes[to_stop].get_avg_location()
-        R = 6371  # Earth radius in km
-        dlat = math.radians(lat2 - lat1)
-        dlon = math.radians(lon2 - lon1)
-        a = (math.sin(dlat / 2) ** 2
-             + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2) ** 2)
-        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-        return R * c
+        # Use Manhattan distance heuristic instead of Haversine formula
+        return (abs(lon2 - lon1) + abs(lat2 - lat1)) * km_per_deg * mins_per_km
 
     def __str__(self):
         total_edges = sum(len(edges) for edges in self.edges.values())
