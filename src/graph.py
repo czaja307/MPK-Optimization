@@ -1,5 +1,6 @@
 import datetime
 from bisect import bisect
+import math
 
 
 class Graph:
@@ -78,6 +79,19 @@ class Graph:
             return path_i - i
         return None
 
+    def get_distance(self, from_stop, to_stop):
+        if from_stop not in self.nodes or to_stop not in self.nodes:
+            return 0.0
+        lat1, lon1 = self.nodes[from_stop].get_avg_location()
+        lat2, lon2 = self.nodes[to_stop].get_avg_location()
+        R = 6371  # Earth radius in km
+        dlat = math.radians(lat2 - lat1)
+        dlon = math.radians(lon2 - lon1)
+        a = (math.sin(dlat / 2) ** 2
+             + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2) ** 2)
+        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+        return R * c
+
     def __str__(self):
         total_edges = sum(len(edges) for edges in self.edges.values())
         return f"Graph with {len(self.nodes)} nodes and {total_edges} edges"
@@ -146,3 +160,4 @@ class Node:
     def __str__(self):
         total_edges = sum(len(edges) for edges in self.outgoing_edges.values())
         return f"Node {self.name} with {len(self.locations)} locations and {total_edges} outgoing edges"
+

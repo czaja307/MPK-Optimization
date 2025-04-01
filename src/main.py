@@ -3,7 +3,7 @@ import sys
 import time
 
 from utils import load_data, load_graph
-from src.algorithms import dijkstra
+from src.algorithms import dijkstra, astar
 
 
 def get_user_input_and_run_dijkstra(graph):
@@ -41,9 +41,6 @@ def main():
     # path, distances = dijkstra(graph, "poprzeczna", "pl. grunwaldzki")
     path, distances, total_time, line_changes = dijkstra(graph, "pl. grunwaldzki", "arkady (capitol)",
                                                          datetime.datetime.strptime("12:00:00", '%H:%M:%S'),
-                                                         graph.get_time_cost)
-    path, distances, total_time, line_changes = dijkstra(graph, "poprzeczna", "rondo",
-                                                         datetime.datetime.strptime("12:00:00", '%H:%M:%S'),
                                                          graph.get_line_cost)
 
     print("Shortest path:")
@@ -52,6 +49,17 @@ def main():
 
     print("Time", total_time)
     print("Line changes:", line_changes)
+
+    path_time, cost_time = astar(graph, "pl. grunwaldzki", "arkady (capitol)",
+                                 datetime.datetime.strptime("12:00:00", '%H:%M:%S'),
+                                 graph.get_time_cost)
+    print("A* Time path:", path_time)
+    print("A* Time cost:", cost_time)
+    path_line, cost_line = astar(graph, "pl. grunwaldzki", "arkady (capitol)",
+                                 datetime.datetime.strptime("12:00:00", '%H:%M:%S'),
+                                 graph.get_line_cost)
+    print("A* Line path:", path_line)
+    print("A* Line cost:", cost_line)
     # get_user_input_and_run_dijkstra(graph)
 
 
