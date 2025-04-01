@@ -65,6 +65,20 @@ class Graph:
 
         return cost, possible_paths[soonest_id]
 
+    def get_line_change_cost(self, start, end, time: datetime.datetime, last_line, used_lines):
+        possible_paths = self.nodes[start].get_sorted_edges(end)
+        if not possible_paths:
+            return float('inf'), None
+
+        soonest_id = self.find_first_id_after(possible_paths, time)
+        if soonest_id is None:
+            soonest_id = 0
+        cost = possible_paths[soonest_id].get_travel_time() + abs(
+            (possible_paths[soonest_id].arrival_time - time).seconds / 60.0)
+        if possible_paths[soonest_id].line != last_line and last_line is not None:
+            cost += 100  # Heavy penalty for line changes
+        return cost, possible_paths[soonest_id]
+
     def find_first_id_after(self, paths, time: datetime.datetime, line=None):
         if not paths:
             return None
