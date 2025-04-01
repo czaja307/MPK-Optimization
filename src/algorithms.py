@@ -1,7 +1,7 @@
 import heapq
 
 
-def dijkstra(graph, start, end, start_time):
+def dijkstra(graph, start, end, start_time, cost_function):
     start_node = None
     end_node = None
     for node in graph.nodes:
@@ -16,12 +16,12 @@ def dijkstra(graph, start, end, start_time):
     # Initialize costs and priority queue
     costs = {node: float('infinity') for node in graph.nodes}
     costs[start] = 0
-    priority_queue = [(0, start, start_time, None)]  # (cost, node, current_time, last_line)
+    priority_queue = [(0, start, start_time, None, 0)]  # (cost, node, current_time, last_line, used_lines)
     previous_nodes = {node: None for node in graph.nodes}
     previous_edges = {node: None for node in graph.nodes}
 
     while priority_queue:
-        current_cost, current_node, current_time, last_line = heapq.heappop(priority_queue)
+        current_cost, current_node, current_time, last_line, line_changes = heapq.heappop(priority_queue)
 
         if current_cost > costs[current_node]:
             continue
@@ -33,7 +33,7 @@ def dijkstra(graph, start, end, start_time):
             if edge.departure_time < current_time:
                 continue
 
-            weight, edge_used = graph.get_time_cost(current_node, neighbor, current_time, last_line, set())
+            weight, edge_used = cost_function(current_node, neighbor, current_time, last_line, line_changes)
 
             if edge_used is None:
                 continue
@@ -45,7 +45,10 @@ def dijkstra(graph, start, end, start_time):
                 costs[neighbor] = distance
                 previous_nodes[neighbor] = current_node
                 previous_edges[neighbor] = edge_used
-                heapq.heappush(priority_queue, (distance, neighbor, new_time, edge_used.line))
+                new_line_changes = line_changes
+                if last_line is not None and edge_used.line != last_line:
+                    new_line_changes += 1
+                heapq.heappush(priority_queue, (distance, neighbor, new_time, edge_used.line, new_line_changes))
 
     # Reconstruct path
     path, current_node = [], end
@@ -65,4 +68,13 @@ def dijkstra(graph, start, end, start_time):
             f" Departure Time: {edge.departure_time.strftime('%H:%M:%S')},"
             f" Arrival Time: {edge.arrival_time.strftime('%H:%M:%S')})")
 
-    return formatted_path, costs
+    total_time = previous_edges[path[-1]].arrival_time - start_time
+    line_changes = 0
+    prev_line = None
+    for i in range(len(path) - 1):
+        edge = previous_edges[path[i + 1]]
+        if prev_line is not None and edge.line != prev_line:
+            line_changes += 1
+        prev_line = edge.line
+
+    return formatted_path, costs, total_time, line_changes

@@ -32,7 +32,6 @@ class Graph:
         self.nodes[edge.start_stop].add_edge(edge)
 
     def get_time_cost(self, start, end, time: datetime.datetime, last_line, used_lines):
-        # Modified to use the new get_sorted_edges method that takes an end_stop parameter
         possible_paths = self.nodes[start].get_sorted_edges(end)
         if not possible_paths:
             return float('inf'), None
@@ -43,14 +42,32 @@ class Graph:
         cost = possible_paths[soonest_id].get_travel_time() + abs(
             (possible_paths[soonest_id].arrival_time - time).seconds / 60.0)
         if possible_paths[soonest_id].line != last_line:
-            cost += 15
+            cost += 5
+        return cost, possible_paths[soonest_id]
+
+    def get_line_cost(self, start, end, time, last_line, used_lines):
+        possible_paths = self.nodes[start].get_sorted_edges(end)
+        if not possible_paths:
+            return float('inf'), None
+
+        soonest_id = self.find_first_id_after(possible_paths, time)
+        if soonest_id is None:
+            soonest_id = 0
+
+        travel_time = possible_paths[soonest_id].get_travel_time()
+        waiting_time = abs((possible_paths[soonest_id].departure_time - time).seconds / 60.0)
+
+        cost = travel_time + waiting_time
+        if possible_paths[soonest_id].line != last_line and last_line is not None:
+            cost += 100 * used_lines
+
         return cost, possible_paths[soonest_id]
 
     def find_first_id_after(self, paths, time: datetime.datetime, line=None):
         if not paths:
             return None
 
-        path_i = bisect(paths, time, key=lambda path: path.arrival_time)
+        path_i = bisect(paths, time, key=lambda path: path.departure_time)
         i = 0
         while path_i - i - 1 >= 0 and paths[path_i - i - 1].arrival_time == time:
             if line is not None:
@@ -64,6 +81,7 @@ class Graph:
     def __str__(self):
         total_edges = sum(len(edges) for edges in self.edges.values())
         return f"Graph with {len(self.nodes)} nodes and {total_edges} edges"
+
 
 class Edge:
     def __init__(self, line, departure_time, arrival_time, start_stop, end_stop, start_stop_lat, start_stop_lon,
