@@ -98,7 +98,7 @@ def astar(graph, start, end, start_time, cost_function):
             path, total_time, line_changes = _reconstruct_with_details(
                 previous_nodes, previous_edges, current_node, start_time
             )
-            return path, current_cost
+            return path, costs, total_time, line_changes
 
         if current_cost > costs[current_node]:
             continue
@@ -123,7 +123,7 @@ def astar(graph, start, end, start_time, cost_function):
                                                 edge.end_stop, edge_used.arrival_time,
                                                 edge_used.line, line_changes))
 
-    return [], float('inf')
+    return [], costs, 0, 0
 
 
 def _reconstruct_with_details(previous_nodes, previous_edges, current_node, start_time):
@@ -162,3 +162,4 @@ def reconstruct_path(came_from, current):
         current = came_from[current]
         path.insert(0, current)
     return path
+

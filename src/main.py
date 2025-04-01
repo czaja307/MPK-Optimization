@@ -41,7 +41,7 @@ def main():
     # path, distances = dijkstra(graph, "poprzeczna", "pl. grunwaldzki")
     path, distances, total_time, line_changes = dijkstra(graph, "pl. grunwaldzki", "arkady (capitol)",
                                                          datetime.datetime.strptime("12:00:00", '%H:%M:%S'),
-                                                         graph.get_line_cost)
+                                                         graph.get_time_cost)
 
     print("Shortest path:")
     for step in path:
@@ -50,18 +50,26 @@ def main():
     print("Time", total_time)
     print("Line changes:", line_changes)
 
-    path_time, cost_time = astar(graph, "pl. grunwaldzki", "arkady (capitol)",
+    path_time, costs_time, total_time_astar, line_changes_astar = astar(graph, "poprzeczna", "rondo",
                                  datetime.datetime.strptime("12:00:00", '%H:%M:%S'),
                                  graph.get_time_cost)
-    print("A* Time path:", path_time)
-    print("A* Time cost:", cost_time)
-    path_line, cost_line = astar(graph, "pl. grunwaldzki", "arkady (capitol)",
+    print("A* shortest path (time):")
+    for step in path_time:
+        print(step)
+    print("Time", total_time_astar)
+    print("Line changes:", line_changes_astar)
+
+    path_line, costs_line, total_time_astar_line, line_changes_astar_line = astar(graph, "poprzeczna", "rondo",
                                  datetime.datetime.strptime("12:00:00", '%H:%M:%S'),
                                  graph.get_line_cost)
-    print("A* Line path:", path_line)
-    print("A* Line cost:", cost_line)
+    print("A* shortest path (line changes):")
+    for step in path_line:
+        print(step)
+    print("Time", total_time_astar_line)
+    print("Line changes:", line_changes_astar_line)
     # get_user_input_and_run_dijkstra(graph)
 
 
 if __name__ == "__main__":
     main()
+
