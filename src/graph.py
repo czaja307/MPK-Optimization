@@ -25,15 +25,12 @@ class Graph:
         self.nodes[name].add_location(lat, long)
 
     def add_edge(self, edge):
-        # Add the edge to the graph's edge collection
         if edge.start_stop not in self.edges:
             self.edges[edge.start_stop] = []
         self.edges[edge.start_stop].append(edge)
-
-        # Also add the edge to the start node's outgoing edges
         self.nodes[edge.start_stop].add_edge(edge)
 
-    def get_time_cost(self, start, end, time: datetime.datetime, last_line, used_lines):
+    def get_time_cost(self, start, end, time, last_line, used_lines):
         possible_paths = self.nodes[start].get_sorted_edges(end)
         if not possible_paths:
             return float('inf'), None
@@ -65,21 +62,7 @@ class Graph:
 
         return cost, possible_paths[soonest_id]
 
-    def get_line_change_cost(self, start, end, time: datetime.datetime, last_line, used_lines):
-        possible_paths = self.nodes[start].get_sorted_edges(end)
-        if not possible_paths:
-            return float('inf'), None
-
-        soonest_id = self.find_first_id_after(possible_paths, time)
-        if soonest_id is None:
-            soonest_id = 0
-        cost = possible_paths[soonest_id].get_travel_time() + abs(
-            (possible_paths[soonest_id].arrival_time - time).seconds / 60.0)
-        if possible_paths[soonest_id].line != last_line and last_line is not None:
-            cost += 100  # Heavy penalty for line changes
-        return cost, possible_paths[soonest_id]
-
-    def find_first_id_after(self, paths, time: datetime.datetime, line=None):
+    def find_first_id_after(self, paths, time, line=None):
         if not paths:
             return None
 
@@ -99,7 +82,6 @@ class Graph:
             return 0.0
         lat1, lon1 = self.nodes[from_stop].get_avg_location()
         lat2, lon2 = self.nodes[to_stop].get_avg_location()
-        # Use Manhattan distance heuristic instead of Haversine formula
         return (abs(lon2 - lon1) + abs(lat2 - lat1)) * km_per_deg * mins_per_km
 
     def __str__(self):
@@ -133,7 +115,7 @@ class Node:
     def __init__(self, name):
         self.name = name
         self.locations = set()
-        self.outgoing_edges = {}  # Changed from list to dictionary
+        self.outgoing_edges = {}
         self.was_sorted = False
 
     def add_location(self, lat, lon):
@@ -141,7 +123,6 @@ class Node:
         self.was_sorted = False
 
     def add_edge(self, edge):
-        # Add the edge to the dictionary using end_stop as key
         if edge.end_stop not in self.outgoing_edges:
             self.outgoing_edges[edge.end_stop] = []
         self.outgoing_edges[edge.end_stop].append(edge)
@@ -156,7 +137,6 @@ class Node:
         return lat_sum / len(self.locations), lon_sum / len(self.locations)
 
     def get_sorted_edges(self, end_stop):
-        # Get sorted edges for a specific end_stop
         if end_stop not in self.outgoing_edges:
             return []
 
@@ -170,4 +150,3 @@ class Node:
     def __str__(self):
         total_edges = sum(len(edges) for edges in self.outgoing_edges.values())
         return f"Node {self.name} with {len(self.locations)} locations and {total_edges} outgoing edges"
-

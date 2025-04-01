@@ -17,7 +17,7 @@ def get_user_input_and_run_dijkstra(graph):
     if optimization_criterion == 't':
         cost_function = graph.get_time_cost
     elif optimization_criterion == 'p':
-        cost_function = graph.get_line_change_cost
+        cost_function = graph.get_line_cost
     else:
         print("Invalid optimization criterion. Defaulting to time.")
         cost_function = graph.get_time_cost
@@ -34,7 +34,6 @@ def get_user_input_and_run_dijkstra(graph):
 
 
 def get_user_input_and_run_multi_stop(graph):
-    """Handle user input for multi-stop route problem and run the solver"""
     start_stop = input()
     stops_to_visit = input().strip().split(';')
     optimization_criterion = input().strip()
@@ -136,7 +135,7 @@ def main():
 
     print("\n=== Tabu Search for multi-stop routing ===")
     # Define some stops to visit
-    multi_stops = ["wrocławski park przemysłowy", "poprzeczna", "galeria dominikańska"]
+    multi_stops = ["litewska", "poprzeczna", "galeria dominikańska"]
     tbs_start = time.time()
     tbs_path, tbs_cost, tbs_time, tbs_line_changes = solve_multi_stop_problem(
         graph, start_stop, multi_stops, start_time, graph.get_time_cost,
